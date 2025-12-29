@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teacher Management System</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+
+    <h2 class="text-center mb-4">📘 Teacher Management System</h2>
+
+    <!-- Teacher Form -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            Add / Update Teacher
+        </div>
+        <div class="card-body">
+            <form id="teacherForm">
+                <input type="hidden" id="teacherId">
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" id="name" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Subject</label>
+                        <input type="text" id="subject" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Salary</label>
+                        <input type="number" id="salary" class="form-control" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success">Save Teacher</button>
+                <button type="reset" class="btn btn-secondary ms-2" onclick="resetForm()">Clear</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Teacher Table -->
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            Teacher List
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-striped text-center">
+                <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Subject</th>
+                    <th>Salary</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="teacherTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const apiUrl = "http://localhost:8081/teachers";
+
+    document.addEventListener("DOMContentLoaded", loadTeachers);
+
+    // Load all teachers
+    function loadTeachers() {
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById("teacherTableBody");
+                tableBody.innerHTML = "";
+
+                data.forEach(teacher => {
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td>${teacher.id}</td>
+                            <td>${teacher.name}</td>
+                            <td>${teacher.subject}</td>
+                            <td>${teacher.salary}</td>
+                            <td>
+                                <button class="btn btn-warning btn-sm" onclick="editTeacher(${teacher.id}, '${teacher.name}', '${teacher.subject}', ${teacher.salary})">
+                                    Edit
+                                </button>
+                                <button class="btn btn-danger btn-sm ms-2" onclick="deleteTeacher(${teacher.id})">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+    }
+
+    // Add or Update Teacher
+    document.getElementById("teacherForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const id = document.getElementById("teacherId").value;
+        const teacher = {
+            name: document.getElementById("name").value,
+            subject: document.getElementById("subject").value,
+            salary: document.getElementById("salary").value
+        };
+
+        if (id) {
+            // Update
+            fetch(`${apiUrl}/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(teacher)
+            }).then(() => {
+                resetForm();
+                loadTeachers();
+            });
+        } else {
+            // Add
+            fetch(apiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(teacher)
+            }).then(() => {
+                resetForm();
+                loadTeachers();
+            });
+        }
+    });
+
+    // Edit teacher
+    function editTeacher(id, name, subject, salary) {
+        document.getElementById("teacherId").value = id;
+        document.getElementById("name").value = name;
+        document.getElementById("subject").value = subject;
+        document.getElementById("salary").value = salary;
+    }
+
+    // Delete teacher
+    function deleteTeacher(id) {
+        if (confirm("Are you sure you want to delete this teacher?")) {
+            fetch(`${apiUrl}/${id}`, { method: "DELETE" })
+                .then(() => loadTeachers());
+        }
+    }
+
+    function resetForm() {
+        document.getElementById("teacherId").value = "";
+        document.getElementById("teacherForm").reset();
+    }
+</script>
+
+</body>
+</html>
